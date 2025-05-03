@@ -1,30 +1,47 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
+import axios from "axios";
+import dotenv from "dotenv";
 dotenv.config();
 
 export async function generateScenario(prompt) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   const mode = process.env.AI_BACKEND_MODE;
+  const fallbackModels = [
+    "models/gemini-2.0-pro",
+    "models/gemini-2.0-flash",
+    "models/gemini-pro",
+  ];
 
-  if (mode === 'openai' || mode === 'both') {
+  if (mode !== "gemini" && mode !== "both") {
+    return "⚠️ Gemini以外のバックエンドは未対応です。";
+  }
+
+  const headers = { "Content-Type": "application/json" };
+
+  for (const modelName of fallbackModels) {
     try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+      console.log(`[Gemini] 試行モデル: ${modelName}`);
       const res = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
+        url,
         {
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: prompt }]
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
         },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-          }
-        }
+        { headers },
       );
-      return res.data.choices[0].message.content.trim();
+
+      const text = res.data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text.trim();
     } catch (e) {
-      console.warn('[OpenAI失敗]', e.message);
-      if (mode === 'openai') throw e;
+      console.warn(
+        `[Geminiモデル失敗] ${modelName}`,
+        e.response?.data?.error?.message || e.message,
+      );
     }
   }
 
-  return `⚠️ シチュエーション案の生成に失敗しました（${new Date().toLocaleString('ja-JP')}）`;
+  return `⚠️ すべてのGeminiモデルで生成に失敗しました（${new Date().toLocaleString("ja-JP")}）`;
 }

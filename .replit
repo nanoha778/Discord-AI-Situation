@@ -1,0 +1,11 @@
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+
+run = "node index.js"
+language = "nodejs"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
