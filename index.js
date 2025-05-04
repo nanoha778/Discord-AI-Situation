@@ -49,7 +49,7 @@ client.once("ready", () => {
 
   cron.schedule(process.env.CRON_SCHEDULE, async () => {
     const prompt =
-      "VRChatメスガキ宅で使えるRPシチュエーション案を3つ教えてください。";
+      "VRChatメスガキ宅訪問イベントのメスガキキャスト向けシチュエーション案を3つ提案してください";
     const text = await generateScenario(prompt);
     const channel = await client.channels.fetch(process.env.CHANNEL_ID);
     channel.send(text);
